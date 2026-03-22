@@ -5,7 +5,7 @@ import typing
 from typing import TypedDict
 
 import jsonlines
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 from ad_dataset.data_manager import DataManager
 
@@ -27,6 +27,7 @@ class DataProcessor:
             model: 预训练模型名称或路径
         """
         self.model = AutoModel.from_pretrained(model, trust_remote_code=True, dtype="auto")
+        self.tokenizer = AutoTokenizer.from_pretrained(model, trust_remote_code=True)
         self.prompt = ("你是一个数据清洗工具，负责从文本中识别并标记乱码广告内容。\n"
                        "识别标准：无法正常阅读、包含随机字符组合、看似乱码的推广信息。\n\n"
                        "输出格式要求：\n"
@@ -50,10 +51,13 @@ class DataProcessor:
         Returns:
             广告列表，结果会累加到 self.result 中
         """
-        resp, _ = self.model.generate(self.prompt + raw)
-        if resp == "NOT_FOUND:::NOT_FOUND;;;":
+        inputs = self.tokenizer(self.prompt + raw, return_tensors="pt")
+        outputs = self.model.generate(**inputs, max_new_tokens=512)
+        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        if response == "NOT_FOUND:::NOT_FOUND;;;":
             return []
-        result: typing.List[str] = resp.split(";;;")
+        result: typing.List[str] = response.split(";;;")
         if result[-1] == '':
             del result[-1]
         for sig_raw in result:
