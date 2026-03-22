@@ -1,6 +1,5 @@
 # 这是一个示例 Python 脚本。
 import sys
-import time
 
 
 # 按 Shift+F10 执行或将其替换为您的代码。
