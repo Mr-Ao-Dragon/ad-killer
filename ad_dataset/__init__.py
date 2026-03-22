@@ -7,4 +7,3 @@ def __init___():
         logging.warning("not set system proxy"
              "this package will try to connect huggingface without proxy,"
              "if you are in China, it may cause some problems")
-        ...
